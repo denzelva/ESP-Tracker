@@ -1,202 +1,59 @@
-#include <stdio.h>
-#include <string.h>
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "esp_wifi.h"
-#include "esp_wifi_types.h"
-#include "esp_system.h"
-#include "esp_event.h"
-#include "esp_event_loop.h"
-#include "nvs_flash.h"
-#include "driver/gpio.h"
-#include "sdkconfig.h"
+/****************************************
+ * Wifi Tracker	- main function			*
+ * Sparkfun ESP32 Thing					*
+ * (c) 2017								*
+ ****************************************/
 
-#define	LED_GPIO_PIN			GPIO_NUM_5
-#define	WIFI_CHANNEL_MAX		(13)
-#define	WIFI_CHANNEL_SWITCH_INTERVAL	(5000)
+#include "inits.h"
+#include "scan.h"
+#include "snif.h"
+#include "scansnif.h"
 
-char mactable[100][18];
+#define	LED_GPIO_PIN					GPIO_NUM_5
+#define	WIFI_CHANNEL_MAX				(13)
+#define	WIFI_CHANNEL_SWITCH_INTERVAL	(1000)
 
-typedef struct {
-	unsigned frame_ctrl:16;
-	unsigned duration_id:16;
-	uint8_t addr1[6]; /* receiver address */
-	uint8_t addr2[6]; /* sender address */
-	uint8_t addr3[6]; /* filtering address */
-	unsigned sequence_ctrl:16;
-	uint8_t addr4[6]; /* optional */
-} wifi_ieee80211_mac_hdr_t;
 
-typedef struct {
-	wifi_ieee80211_mac_hdr_t hdr;
-	uint8_t payload[0]; /* network data ended with 4 bytes csum (CRC32) */
-} wifi_ieee80211_packet_t;
+void app_main(void) {
 
-static esp_err_t event_handler(void *ctx, system_event_t *event);
-static void wifi_sniffer_init(void);
-static void wifi_sniffer_set_channel(uint8_t channel);
-static const char *wifi_sniffer_packet_type2str(wifi_promiscuous_pkt_type_t type);
-static void wifi_sniffer_packet_handler(void *buff, wifi_promiscuous_pkt_type_t type);
-
-void
-app_main(void)
-{
 	uint8_t level = 0, channel = 1;
 
-	/* setup */
-	wifi_sniffer_init();
+	esp_event_loop_init(event_handler, NULL);
+	esp_wifi_set_country(WIFI_COUNTRY_EU);
 	gpio_set_direction(LED_GPIO_PIN, GPIO_MODE_OUTPUT);
-	
-	//mac adres array vullen met x'en om insert rij te bepalen
-	int i = 0, j = 0;
-	//i[0][0] = 'f';
-	for(i = 1; i < 100; i++)
-	    for(j = 0; j < 18; j++)
-        	mactable[i][j] = 'x';
-	
-	//Gevulde array printen
-	for (i = 0; i < 100; i++) {
-            for (j = 0; j < 18; j++) {
-                printf("%c ", mactable[i][j]);
-            }
-            printf("\n");
-        }
-	
 
-	/* loop */
+	//Fill MAC and AP table
+	int i = 0, j = 0;
+	for(i = 1; i < 250; i++){
+	    for(j = 0; j < 18; j++){
+        	macTable[i][j] = 'M';
+        	APTable[i][j] = 'A';
+        }
+        //Fill RSSI table
+        for(j = 0; j < 4; j++){
+        	rssiTable[i][j] = 'r';
+        }
+        //Fill AP flag table
+        APflag[i][0] = '0';
+    }
+
+	wifi_scan_init();
+	scan_ap_task(0);
+	wifi_sniffer_init();	
+
 	while (true) {
-		gpio_set_level(LED_GPIO_PIN, level ^= 1);
-		vTaskDelay(WIFI_CHANNEL_SWITCH_INTERVAL / portTICK_PERIOD_MS);
-		wifi_sniffer_set_channel(channel);
-		channel = (channel % WIFI_CHANNEL_MAX) + 1;
-    	}
-
+		for(i = 0; i < 13; i++){
+			gpio_set_level(LED_GPIO_PIN, level ^= 1);
+			vTaskDelay(WIFI_CHANNEL_SWITCH_INTERVAL / portTICK_PERIOD_MS);
+			wifi_sniffer_set_channel(channel);
+			channel = (channel % WIFI_CHANNEL_MAX) + 1;
+			esp_wifi_set_promiscuous_rx_cb(&wifi_sniffer_packet_handler);
+		}
+		
+		printf("\nuit de for loop\n");
+		wifi_scan_init();
+		scan_ap_snif(0);
+		wifi_sniffer_init();
+		vTaskDelay(5000 / portTICK_PERIOD_MS);
+   	}
 }
-
-esp_err_t
-event_handler(void *ctx, system_event_t *event)
-{
-	return ESP_OK;
-}
-
-void
-wifi_sniffer_init(void)
-{
-
-	nvs_flash_init();
-    	tcpip_adapter_init();
-    	ESP_ERROR_CHECK( esp_event_loop_init(event_handler, NULL) );
-    	wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-	ESP_ERROR_CHECK( esp_wifi_init(&cfg) );
-	/* set country EU for channel range [1, 13] */
-	ESP_ERROR_CHECK( esp_wifi_set_country(WIFI_COUNTRY_EU) );
-	ESP_ERROR_CHECK( esp_wifi_set_storage(WIFI_STORAGE_FLASH) );
-    	ESP_ERROR_CHECK( esp_wifi_set_mode(WIFI_MODE_NULL) );
-    	ESP_ERROR_CHECK( esp_wifi_start() );
-	esp_wifi_set_promiscuous(true);
-	esp_wifi_set_promiscuous_rx_cb(&wifi_sniffer_packet_handler);
-}
-
-void
-wifi_sniffer_set_channel(uint8_t channel)
-{
-	
-	esp_wifi_set_channel(channel, WIFI_SECOND_CHAN_NONE);
-	printf("\nNu kanaal %d scannen.\n", channel);
-}
-
-const char *
-wifi_sniffer_packet_type2str(wifi_promiscuous_pkt_type_t type)
-{
-	switch(type) {
-	case WIFI_PKT_CTRL: return "CTRL";
-	case WIFI_PKT_MGMT: return "MGMT";
-	case WIFI_PKT_DATA: return "DATA";
-	default:	
-	case WIFI_PKT_MISC: return "MISC";
-	}
-}
-
-void
-wifi_sniffer_packet_handler(void* buff, wifi_promiscuous_pkt_type_t type)
-{	
-
-	const wifi_promiscuous_pkt_t *ppkt = (wifi_promiscuous_pkt_t *)buff;
-	const wifi_ieee80211_packet_t *ipkt = (wifi_ieee80211_packet_t *)ppkt->payload;
-	const wifi_ieee80211_mac_hdr_t *hdr = &ipkt->hdr;
-	
-	//Access Points filteren
-	//Aruba Systems Inc. AP's
-	if(hdr->addr2[0] == 36 && hdr->addr2[1] == 222 && hdr->addr2[2] == 198)
-		return;
-	if(hdr->addr2[0] == 156 && hdr->addr2[1] == 28 && hdr->addr2[2] == 18)
-		return;
-	if(hdr->addr2[0] == 64 && hdr->addr2[1] == 227 && hdr->addr2[2] == 214)
-		return;
-	if(hdr->addr2[0] == 24 && hdr->addr2[1] == 100 && hdr->addr2[2] == 114)
-		return;
-	if(hdr->addr2[0] == 240 && hdr->addr2[1] == 92 && hdr->addr2[2] == 25)
-		return;
-
-	char temp[3];
-	char adres[18] = "";
-	
-	//hex to string
-	for(int a = 0; a < 6; a++){
-	    sprintf(temp, "%02x", hdr->addr2[a]); 
-	    if(a == 5){
-		strcat(adres, temp);	
-	    }else{
-		strcat(adres, temp);		
-		strcat(adres, ":");
-	    }
-	}
-	
-	int x = 0, y = 0;
-	while(mactable[x][0] != 'x'){
-	    x++;
-	    if(x > 102)
-		return;
-	}
-
-	//printf("\nDit is het MAC adres: %s\n", adres);
-
-/*
-	printf("PACKET TYPE=%s, CHAN=%02d, RSSI=%02d\n",
-		wifi_sniffer_packet_type2str(type),
-		ppkt->rx_ctrl.channel,
-		ppkt->rx_ctrl.rssi
-	);
-*/
-
-	//Check op duplicaten
-	for(y = 0; y < x; y++){
-	    if(strcmp(mactable[y], adres) == 0){
-//		printf("Dit MAC adres staat al in de tabel.\n");
-//		printf("Het aantal toestellen is %d.\n", x-2);		
-		return;
-	    }
-	}
-
-	strcpy(&mactable[x][0], adres);
-	
-	//printf("\033c");	
-
-	//Print de tabel
-	int i = 0, j = 0;
-	for (i = 0; i < x+1; i++) {
-            for (j = 0; j < 18; j++) {
-                printf("%c ", mactable[i][j]);
-            }
-            printf("\n");
-        }
-
-	printf("Aantal toestellen: %d.\n", x);
-	
-
-	
-	
-
-
-}
-

@@ -207,7 +207,6 @@ void wifi_sniffer_packet_handler(void* buff, wifi_promiscuous_pkt_type_t type)
 	printf("\n%d devices including %d AP's.\n", x, APcount);
 }
 
-
 void app_main(void) {
 
 	uint8_t level = 0, channel = 1;

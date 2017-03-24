@@ -1,8 +1,8 @@
-/************************************
- * Wifi Tracker	- inits & includes	*
- * Sparkfun ESP32 Thing				*
- * (c) 2017							*
- ************************************/
+/****************************************
+ * Wifi Tracker	- inits & includes		*
+ * Sparkfun ESP32 Thing					*
+ * (c) 2017								*
+ ****************************************/
 
 #include <stdio.h>
 #include <string.h>
@@ -21,6 +21,7 @@
 char macTable[250][18];
 char rssiTable[250][4];
 char APTable[250][18];
+char APScanTable[250][18];
 char APflag[250][1];
 
 int e = 0;

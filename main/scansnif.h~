@@ -26,6 +26,7 @@ void scan_ap_snif(void *pvParameters)
 					 al[i].ssid, MAC2STR(bi), al[i].rssi);
 
 					sprintf(APadres, "%02x:%02x:%02x:%02x:%02x:%02x", MAC2STR(bi));
+					
 					while(APTable[x][0] != 'A'){
 					    x++;
 					}
@@ -36,16 +37,16 @@ void scan_ap_snif(void *pvParameters)
 					    }
 					}
 					for(y = 0; y < x; y++){
-						if(strcmp(macTable[y], adres) == 0){
-							strcpy(&APflag[x][0], "1");
-							return;
+						if(strcmp(macTable[y], APadres) == 0){
+							strcpy(&APflag[y][0], "1");
+							break;
 						}
 					}
-²					strcpy(&APTable[x][0], APadres);
+					strcpy(&APTable[x][0], APadres);
 					
 			}
 		}
 
 		free(al);
-		vTaskDelay(100 / portTICK_PERIOD_MS);
+		vTaskDelay(1000 / portTICK_PERIOD_MS);
 }

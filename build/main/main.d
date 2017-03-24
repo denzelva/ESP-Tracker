@@ -1,4 +1,4 @@
-main.o: /home/pxl/Github/main/./main.c /home/pxl/Github/main/./inits.h \
+main.o: /home/pxl/ESPTracker/main/./main.c \
  /home/pxl/Desktop/iotbits_esp32/esp-idf/components/newlib/include/stdio.h \
  /home/pxl/Desktop/iotbits_esp32/esp-idf/components/newlib/include/_ansi.h \
  /home/pxl/Desktop/iotbits_esp32/esp-idf/components/newlib/include/newlib.h \
@@ -23,7 +23,7 @@ main.o: /home/pxl/Github/main/./main.c /home/pxl/Github/main/./inits.h \
  /home/pxl/Desktop/iotbits_esp32/esp-idf/components/newlib/include/stdint.h \
  /home/pxl/Desktop/iotbits_esp32/esp-idf/components/newlib/include/sys/_intsup.h \
  /home/pxl/Desktop/iotbits_esp32/esp-idf/components/freertos/include/freertos/FreeRTOSConfig.h \
- /home/pxl/Github/build/include/sdkconfig.h \
+ /home/pxl/ESPTracker/build/include/sdkconfig.h \
  /home/pxl/Desktop/iotbits_esp32/esp-idf/components/freertos/include/freertos/xtensa_config.h \
  /home/pxl/Desktop/iotbits_esp32/esp-idf/components/esp32/include/xtensa/hal.h \
  /home/pxl/Desktop/iotbits_esp32/esp-idf/components/esp32/include/xtensa/config/core.h \
@@ -101,11 +101,7 @@ main.o: /home/pxl/Github/main/./main.c /home/pxl/Github/main/./inits.h \
  /home/pxl/Desktop/iotbits_esp32/esp-idf/components/esp32/include/esp_intr_alloc.h \
  /home/pxl/Desktop/iotbits_esp32/esp-idf/components/esp32/include/esp_event.h \
  /home/pxl/Desktop/iotbits_esp32/esp-idf/components/esp32/include/esp_event_loop.h \
- /home/pxl/Desktop/iotbits_esp32/esp-idf/components/nvs_flash/include/nvs_flash.h \
- /home/pxl/Github/main/./scan.h /home/pxl/Github/main/./snif.h \
- /home/pxl/Github/main/./scansnif.h
-
-/home/pxl/Github/main/./inits.h:
+ /home/pxl/Desktop/iotbits_esp32/esp-idf/components/nvs_flash/include/nvs_flash.h
 
 /home/pxl/Desktop/iotbits_esp32/esp-idf/components/newlib/include/stdio.h:
 
@@ -155,7 +151,7 @@ main.o: /home/pxl/Github/main/./main.c /home/pxl/Github/main/./inits.h \
 
 /home/pxl/Desktop/iotbits_esp32/esp-idf/components/freertos/include/freertos/FreeRTOSConfig.h:
 
-/home/pxl/Github/build/include/sdkconfig.h:
+/home/pxl/ESPTracker/build/include/sdkconfig.h:
 
 /home/pxl/Desktop/iotbits_esp32/esp-idf/components/freertos/include/freertos/xtensa_config.h:
 
@@ -312,9 +308,3 @@ main.o: /home/pxl/Github/main/./main.c /home/pxl/Github/main/./inits.h \
 /home/pxl/Desktop/iotbits_esp32/esp-idf/components/esp32/include/esp_event_loop.h:
 
 /home/pxl/Desktop/iotbits_esp32/esp-idf/components/nvs_flash/include/nvs_flash.h:
-
-/home/pxl/Github/main/./scan.h:
-
-/home/pxl/Github/main/./snif.h:
-
-/home/pxl/Github/main/./scansnif.h:

@@ -1,7 +1,7 @@
 /****************************************
- * Wifi Tracker							*
- * Sparkfun ESP32 Thing					*
- * (c) 2017								*
+ * Wifi Tracker				*
+ * Sparkfun ESP32 Thing			*
+ * (c) 2017				*
  ****************************************/
 
 #include <stdio.h>

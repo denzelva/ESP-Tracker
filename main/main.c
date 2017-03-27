@@ -1,6 +1,7 @@
 /****************************************
  * Wifi Tracker				*
- * Sparkfun ESP32 Thing			*
+ * Denzel Vanrompay			*
+ * PXL-Research | Smart-ICT		*
  * (c) 2017				*
  ****************************************/
 
@@ -32,11 +33,11 @@ struct snif {
 typedef struct {
 	unsigned frame_ctrl:16;
 	unsigned duration_id:16;
-	uint8_t addr1[6]; /* receiver address */
-	uint8_t addr2[6]; /* sender address */
-	uint8_t addr3[6]; /* filtering address */
+	uint8_t addr1[6]; //receiver address
+	uint8_t addr2[6]; //sender address
+	uint8_t addr3[6]; //filtering address
 	unsigned sequence_ctrl:16;
-	uint8_t addr4[6]; /* optional */
+	uint8_t addr4[6]; //optional
 } wifi_ieee80211_mac_hdr_t;
 
 typedef struct {
@@ -96,16 +97,17 @@ void scan_ap_task(void *pvParameters)
 			for (i = 0; i < n; i++) {
 				uint8_t *bi = al[i].bssid;
 				printf
-					("%32s (%02x:%02x:%02x:%02x:%02x:%02x) rssi: %02d\r\n",
+					("%32s (%02x:%02x:%02x:%02x:%02x:%02x) rssi: %02d\n",
 					 al[i].ssid, MAC2STR(bi), al[i].rssi);
 
 					sprintf(APadres, "%02x:%02x:%02x:%02x:%02x:%02x", MAC2STR(bi));
 					
+					//Check for empty row to copy to
 					while(APlist[x].mac[0] != 'R'){
 					    x++;
 					}
 					
-					//Check duplicates in AP list
+					//Check if AP is already in list
 					d = 0;
 					for(j = 1; j < x; j++){
 					    if(strcmp(APlist[j].mac, APadres) == 0){
@@ -113,6 +115,7 @@ void scan_ap_task(void *pvParameters)
 					    }
 					}
 					printf("%d\n", d);
+					//Copy AP into APlist if not exist
 					if(d == 0){
 						strcpy(&APlist[x].mac[0], APadres);				
 						APlist[x].rssi = al[i].rssi;
@@ -157,13 +160,14 @@ void wifi_sniffer_packet_handler(void* buff, wifi_promiscuous_pkt_type_t type)
 	    }
 	}
 
+	//Check for empty row to copy to
 	while(list[x].mac[0] != 'M'){
 	    x++;
 	    if(x == 250)
 			return;
 	}
 	
-	//Check duplicates
+	//Check is MAC already exists
 	d = 0;
 	for(y = 0; y < x; y++){
 	    if(strcmp(list[y].mac, adres) == 0){
@@ -187,14 +191,14 @@ void wifi_sniffer_packet_handler(void* buff, wifi_promiscuous_pkt_type_t type)
 		return;
 	
 	
-	//Copy MAC and RSSI in tables
+	//Copy MAC and RSSI in list
 	strcpy(&list[x].mac[0], adres);
 	list[x].rssi = ppkt->rx_ctrl.rssi;
 
 	//Clear Terminal
 	//printf("\033c");
 	
-	//Print APlist
+	//Print list of devices
 	for(i = 1; i <= x; i++){
 		for(j = 0; j < 18; j++){
 			printf("%c", list[i].mac[j]);
@@ -204,8 +208,9 @@ void wifi_sniffer_packet_handler(void* buff, wifi_promiscuous_pkt_type_t type)
 			APcount++;
 	}
 
-	printf("\n%d devices including %d AP's.\n", x, APcount);
+	printf("\n%d user devices and %d AP's. \n%d devices in total.\n\n", x - APcount, APcount, x);
 }
+
 
 void app_main(void) {
 
@@ -215,7 +220,7 @@ void app_main(void) {
 	esp_wifi_set_country(WIFI_COUNTRY_EU);
 	gpio_set_direction(LED_GPIO_PIN, GPIO_MODE_OUTPUT);
 
-	//Fill MAC and AP table
+	//Fill MAC and AP list
 	int i = 0, j = 0;
 	for(i = 1; i < 250; i++){
 	    for(j = 0; j < 18; j++){
@@ -223,25 +228,30 @@ void app_main(void) {
 			APlist[i].mac[j] = 'R';
         }
     }
-
+	
+	//Clear terminal
 	printf("\033c");
 	
 	while (true) {
+		//Initialize AP scan mode
 		wifi_scan_init();
-	
+		
+		//Scan for AP's
 		for(i = 0; i < 3; i++)
 			scan_ap_task(0);
-	
+		
+		//Initialize sniffer mode
 		wifi_sniffer_init();
 	
+		//Snif for devices
 		for(i = 0; i < 13; i++){
 			gpio_set_level(LED_GPIO_PIN, level ^= 1);
 			vTaskDelay(WIFI_CHANNEL_SWITCH_INTERVAL / portTICK_PERIOD_MS);
 			wifi_sniffer_set_channel(channel);
 			channel = (channel % WIFI_CHANNEL_MAX) + 1;
 			esp_wifi_set_promiscuous_rx_cb(&wifi_sniffer_packet_handler);
-			printf("\nChannel %d\n", i);
+			printf("\nChannel %d\n", i+1);
 		}
-		vTaskDelay(5000 / portTICK_PERIOD_MS);
+		vTaskDelay(2000 / portTICK_PERIOD_MS);
    	}
 }

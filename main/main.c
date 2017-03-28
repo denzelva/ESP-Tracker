@@ -1,5 +1,5 @@
 /****************************************
- * Wifi Tracker				*
+ * ESP Tracker				*
  * Denzel Vanrompay			*
  * PXL-Research | Smart-ICT		*
  * (c) 2017				*
